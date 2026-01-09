@@ -1,4 +1,10 @@
 package com.harukadev.domain.slash
 
-class SlashCommandHandler {
+import com.harukadev.messaging.Job
+
+object SlashCommandHandler {
+
+    fun handle(job: Job) {
+        println(job.payload.)
+    }
 }

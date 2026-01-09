@@ -1,4 +1,14 @@
 package com.harukadev.messaging
 
-class JobDeserializer {
+import com.harukadev.util.Json
+
+object JobDeserializer {
+
+    fun deserialize(raw: String): Job {
+        return Json.decode<Job>(raw)
+    }
+
+    fun serialize(job: Job): String {
+        return Json.encode(job)
+    }
 }

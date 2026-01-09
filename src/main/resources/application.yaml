@@ -4,3 +4,7 @@ ktor:
       - com.harukadev.ApplicationKt.module
   deployment:
     port: 8080
+  lettuce:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+    password: ${REDIS_PORT}
