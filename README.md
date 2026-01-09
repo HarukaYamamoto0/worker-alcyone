@@ -1,45 +1,72 @@
-# worker-alcyone
+# Worker Alcyone
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
+Worker Alcyone is a high-performance, modular Discord command processor built with Kotlin and Ktor. It is designed to scale horizontally by consuming Discord interactions from a Redis queue and responding directly to Discord's API using interaction tokens.
 
-Here are some useful links to get you started:
+## 🚀 Architecture
 
-- [Ktor Documentation](https://ktor.io/docs/home.html)
-- [Ktor GitHub page](https://github.com/ktorio/ktor)
-- The [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). You'll need
-  to [request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up) to join.
+The system operates as a distributed worker:
+1. **Queueing**: A gateway (external) receives interactions from Discord and pushes them into a Redis list (`discord:interactions`).
+2. **Consuming**: Multiple instances of Worker Alcyone can run concurrently, performing `BRPOP` on the Redis queue.
+3. **Processing**: The worker identifies the command type and name, routing it to the appropriate modular handler.
+4. **Responding**: The worker uses the Discord Interaction Token to send a reply via Ktor's HTTP Client, bypassing the need for a permanent WebSocket connection for responses.
 
-## Features
+## ✨ Key Features
 
-Here's a list of features included in this project:
+- **Modular Command System**: Easily add Slash Commands, User Context Menu Commands, and Message Context Menu Commands.
+- **Scalable**: Horizontal scaling support via Redis.
+- **Robust Error Handling**: Built-in retry policy and Dead Letter Queue (DLQ) for failed jobs.
+- **Lightweight**: Uses Ktor CIO engine for efficient asynchronous I/O.
+- **Type-Safe**: Strong typing for Discord Snowflakes and Interaction Payloads.
 
-| Name                                                               | Description                                                                        |
-|--------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| [Routing](https://start.ktor.io/p/routing)                         | Provides a structured routing DSL                                                  |
-| [Content Negotiation](https://start.ktor.io/p/content-negotiation) | Provides automatic content conversion according to Content-Type and Accept headers |
-| [Status Pages](https://start.ktor.io/p/status-pages)               | Provides exception handling for routes                                             |
-| [Call Logging](https://start.ktor.io/p/call-logging)               | Logs client requests                                                               |
-| [Default Headers](https://start.ktor.io/p/default-headers)         | Adds a default set of headers to HTTP responses                                    |
-| [Compression](https://start.ktor.io/p/compression)                 | Compresses responses using encoding algorithms like GZIP                           |
+## 🛠 Technology Stack
 
-## Building & Running
+- **Kotlin**: 2.x
+- **Ktor**: Server (Health checks/Monitoring) & Client (Discord API)
+- **Redis**: Via Lettuce driver
+- **Serialization**: Kotlinx Serialization (JSON)
+- **Logging**: Logback
 
-To build or run the project, use one of the following tasks:
+## ⚙️ Configuration
 
-| Task                                    | Description                                                          |
-|-----------------------------------------|----------------------------------------------------------------------|
-| `./gradlew test`                        | Run the tests                                                        |
-| `./gradlew build`                       | Build everything                                                     |
-| `./gradlew buildFatJar`                 | Build an executable JAR of the server with all dependencies included |
-| `./gradlew buildImage`                  | Build the docker image to use with the fat JAR                       |
-| `./gradlew publishImageToLocalRegistry` | Publish the docker image locally                                     |
-| `./gradlew run`                         | Run the server                                                       |
-| `./gradlew runDocker`                   | Run using the local docker image                                     |
+The worker can be configured using environment variables:
 
-If the server starts successfully, you'll see the following output:
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `REDIS_HOST` | Redis server hostname | `localhost` |
+| `REDIS_PORT` | Redis server port | `6379` |
+| `REDIS_PASSWORD` | Redis server password | `null` |
 
+## 📦 Project Structure
+
+- `adapters/discord`: Discord API client and data models.
+- `domain/commands`: Modular command interfaces and implementations.
+- `messaging`: Job processing, routing, and retry logic.
+- `workers`: Worker supervisor and lifecycle management.
+
+## 🆕 Adding New Commands
+
+To add a new command, implement one of the specialized interfaces (`SlashCommand`, `UserContextCommand`, or `MessageContextCommand`):
+
+```kotlin
+object MyCommand : SlashCommand {
+    override val name = "hello"
+    override suspend fun execute(context: InteractionContext) {
+        context.client.reply(context.payload, InteractionReplyOptions(content = "Hello World!"))
+    }
+}
 ```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
+
+Then register it in `Application.kt`:
+
+```kotlin
+CommandRegistry.register(MyCommand)
+```
+
+## 🧪 Testing
+
+Run the test suite using Gradle:
+
+```bash
+./gradlew test
 ```
 
