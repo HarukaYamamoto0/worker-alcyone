@@ -13,8 +13,8 @@ fun Application.configureRouting() {
         }
     }
     routing {
-        get("/") {
-            call.respondText("Hello World!")
+        get("/health") {
+            call.respond(mapOf("status" to "UP"))
         }
     }
 }

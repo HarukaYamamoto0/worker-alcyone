@@ -1,12 +1,12 @@
 package com.harukadev.messaging
 
-import com.harukadev.domain.slash.SlashCommandHandler
+import com.harukadev.domain.InteractionHandler
 
 object JobRouter {
 
-    fun route(job: Job) {
+    suspend fun route(job: Job) {
         when (job.type) {
-            "SLASH_COMMAND" -> SlashCommandHandler.handle(job)
+            "DISCORD_INTERACTION" -> InteractionHandler.handle(job)
             else -> error("Unknown job type: ${job.type}")
         }
     }
